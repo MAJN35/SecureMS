@@ -1,0 +1,6 @@
+{
+  "name": "SecureSMS",
+  "description": "Offline, end-to-end encrypted SMS messenger with Persian-script ciphertext mode, zero internet access, and local authenticated key verification.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

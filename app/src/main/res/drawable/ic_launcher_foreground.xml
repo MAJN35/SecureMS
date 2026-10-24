@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Subtle Elevation Shadow Behind Speech Bubble -->
+    <path
+        android:fillColor="#24001829"
+        android:pathData="M34,31h40c5.52,0 10,4.48 10,10v22c0,5.52 -4.48,10 -10,10H49l-13,10l2.5,-10H34c-5.52,0 -10,-4.48 -10,-10V41c0,-5.52 4.48,-10 10,-10z" />
+
+    <!-- Crisp White Speech Bubble Body + Tail (Centered in 66dp Safe Zone) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M34,29h40c5.52,0 10,4.48 10,10v22c0,5.52 -4.48,10 -10,10H49l-13,10l2.5,-10H34c-5.52,0 -10,-4.48 -10,-10V39c0,-5.52 4.48,-10 10,-10z" />
+
+    <!-- Lock Shackle (Vibrant Sapphire Blue #0284C7) -->
+    <path
+        android:fillColor="#0284C7"
+        android:pathData="M47,46v-4c0,-3.87 3.13,-7 7,-7s7,3.13 7,7v4h-3.2v-4c0,-2.1 -1.7,-3.8 -3.8,-3.8s-3.8,1.7 -3.8,3.8v4H47z" />
+
+    <!-- Lock Body (Vibrant Sapphire Blue #0284C7) -->
+    <path
+        android:fillColor="#0284C7"
+        android:pathData="M45.5,45h17c1.93,0 3.5,1.57 3.5,3.5v11c0,1.93 -1.57,3.5 -3.5,3.5h-17c-1.93,0 -3.5,-1.57 -3.5,-3.5v-11c0,-1.93 1.57,-3.5 3.5,-3.5z" />
+
+    <!-- Emerald Security Badge Dot on Top-Right of Bubble -->
+    <path
+        android:fillColor="#10B981"
+        android:pathData="M74,35m-4.5,0a4.5,4.5 0,1 1,9 0a4.5,4.5 0,1 1,-9 0" />
+
+    <!-- White Keyhole Inside Lock Body -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,51.8c-1.22,0 -2.2,0.98 -2.2,2.2c0,0.82 0.45,1.53 1.1,1.91V59h2.2v-3.09c0.65,-0.38 1.1,-1.09 1.1,-1.91c0,-1.22 -0.98,-2.2 -2.2,-2.2z" />
+</vector>
