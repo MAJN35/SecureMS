@@ -205,6 +205,39 @@ object ContactHelper {
     }
 
     /**
+     * Decodes a bitmap from a content URI using inSampleSize to prevent OutOfMemory on high-res camera photos.
+     */
+    fun decodeSampledBitmap(context: Context, uri: Uri, reqWidth: Int = 360, reqHeight: Int = 360): Bitmap? {
+        return try {
+            val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            context.contentResolver.openInputStream(uri)?.use { stream ->
+                BitmapFactory.decodeStream(stream, null, options)
+            }
+            if (options.outWidth <= 0 || options.outHeight <= 0) return null
+
+            var inSampleSize = 1
+            if (options.outHeight > reqHeight || options.outWidth > reqWidth) {
+                val halfHeight = options.outHeight / 2
+                val halfWidth = options.outWidth / 2
+                while ((halfHeight / inSampleSize) >= reqHeight && (halfWidth / inSampleSize) >= reqWidth) {
+                    inSampleSize *= 2
+                }
+            }
+
+            val decodeOptions = BitmapFactory.Options().apply {
+                this.inSampleSize = inSampleSize
+                inPreferredConfig = Bitmap.Config.ARGB_8888
+            }
+
+            context.contentResolver.openInputStream(uri)?.use { stream ->
+                BitmapFactory.decodeStream(stream, null, decodeOptions)
+            }
+        } catch (e: Throwable) {
+            null
+        }
+    }
+
+    /**
      * Copies an image from a gallery picker or contact photo URI into internal app storage,
      * center-cropping and scaling to 320x320 so it remains permanently accessible offline.
      */
@@ -214,9 +247,10 @@ object ContactHelper {
         identifier: String
     ): String? {
         return try {
-            val rawBitmap = context.contentResolver.openInputStream(sourceUri)?.use { stream ->
-                BitmapFactory.decodeStream(stream)
-            } ?: return null
+            val rawBitmap = decodeSampledBitmap(context, sourceUri, 400, 400)
+                ?: context.contentResolver.openInputStream(sourceUri)?.use { stream ->
+                    BitmapFactory.decodeStream(stream)
+                } ?: return null
 
             val croppedSquare = centerCropSquare(rawBitmap, 320)
             val avatarsDir = File(context.filesDir, "avatars")
@@ -224,7 +258,7 @@ object ContactHelper {
                 avatarsDir.mkdirs()
             }
 
-            val safeId = identifier.replace(Regex("[^a-zA-Z0-9_]"), "_").take(24)
+            val safeId = identifier.replace(Regex("[^a-zA-Z0-9_]"), "_").take(24).ifBlank { "user" }
             val destFile = File(avatarsDir, "avatar_${safeId}_${System.currentTimeMillis()}.jpg")
 
             FileOutputStream(destFile).use { out ->
@@ -250,16 +284,21 @@ object ContactHelper {
             val bmp = when {
                 avatarUri.startsWith("file://") -> {
                     val path = Uri.parse(avatarUri).path ?: return null
+                    val file = File(path)
+                    if (!file.exists()) return null
                     BitmapFactory.decodeFile(path)
                 }
                 avatarUri.startsWith("/") -> {
+                    val file = File(avatarUri)
+                    if (!file.exists()) return null
                     BitmapFactory.decodeFile(avatarUri)
                 }
                 else -> {
                     val uri = Uri.parse(avatarUri)
-                    context.contentResolver.openInputStream(uri)?.use { stream ->
-                        BitmapFactory.decodeStream(stream)
-                    }
+                    decodeSampledBitmap(context, uri, 320, 320)
+                        ?: context.contentResolver.openInputStream(uri)?.use { stream ->
+                            BitmapFactory.decodeStream(stream)
+                        }
                 }
             }
             if (bmp != null) {

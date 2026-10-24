@@ -27,6 +27,9 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Share
@@ -38,11 +41,13 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.ui.text.style.TextOverflow
 import com.example.ui.components.LiquidButton as Button
 import com.example.ui.components.LiquidIconButton as IconButton
 import com.example.ui.components.LiquidOutlinedButton as OutlinedButton
@@ -56,6 +61,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
@@ -102,7 +108,17 @@ fun SecuritySettingsScreen(
     var myAvatarUri by remember {
         mutableStateOf(prefs.getString("my_avatar_uri", "") ?: "")
     }
+    var myDisplayName by remember {
+        mutableStateOf(prefs.getString("my_display_name", "من") ?: "من")
+    }
+    var myPhoneNumber by remember {
+        mutableStateOf(prefs.getString("my_phone_number", "") ?: "")
+    }
+    var myBio by remember {
+        mutableStateOf(prefs.getString("my_bio", "ارتباط امن با رمزنگاری سرتاسری E2EE") ?: "")
+    }
     var showMyAvatarPicker by remember { mutableStateOf(false) }
+    var showEditProfileDialog by remember { mutableStateOf(false) }
     var showWipeConfirmDialog by remember { mutableStateOf(false) }
     var showRegenerateKeyDialog by remember { mutableStateOf(false) }
     var showQrDialog by remember { mutableStateOf(false) }
@@ -140,53 +156,98 @@ fun SecuritySettingsScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp)
         ) {
-            // My Profile Picture Card
+            // My Profile Card
             GlassCard(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(18.dp),
                 cornerRadius = 18.dp
             ) {
-                Row(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                        .padding(14.dp)
                 ) {
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         ContactAvatar(
-                            name = "من",
+                            name = myDisplayName,
                             avatarUri = myAvatarUri,
-                            size = 56.dp,
+                            size = 60.dp,
                             showCameraBadge = true,
                             onClick = { showMyAvatarPicker = true }
                         )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
+                        Spacer(modifier = Modifier.width(14.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = myDisplayName,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 16.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(50))
+                                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.16f))
+                                        .padding(horizontal = 7.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        text = "شما",
+                                        fontSize = 10.sp,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = "پروفایل امن من",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 15.sp,
-                                color = MaterialTheme.colorScheme.onSurface
+                                text = if (myPhoneNumber.isNotBlank()) myPhoneNumber else "شماره همراه تنظیم نشده (ضربه بزنید)",
+                                fontSize = 12.sp,
+                                color = if (myPhoneNumber.isNotBlank()) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary
                             )
+                            Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = "انتخاب عکس از گالری، مخاطبین یا نمادهای امنیتی",
+                                text = myBio,
                                 fontSize = 11.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    OutlinedButton(
-                        onClick = { showMyAvatarPicker = true },
-                        shape = RoundedCornerShape(10.dp)
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Icon(Icons.Default.CameraAlt, contentDescription = null, modifier = Modifier.size(15.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("تغییر عکس", fontSize = 11.sp)
+                        OutlinedButton(
+                            onClick = { showEditProfileDialog = true },
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("edit_profile_button"),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(15.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("ویرایش مشخصات", fontSize = 12.sp)
+                        }
+
+                        Button(
+                            onClick = { showMyAvatarPicker = true },
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("change_avatar_button"),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Icon(Icons.Default.CameraAlt, contentDescription = null, modifier = Modifier.size(15.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("تغییر عکس", fontSize = 12.sp)
+                        }
                     }
                 }
             }
@@ -640,14 +701,97 @@ fun SecuritySettingsScreen(
 
     if (showMyAvatarPicker) {
         AvatarPickerDialog(
-            contactName = "پروفایل من",
-            phoneNumber = "",
+            contactName = myDisplayName,
+            phoneNumber = myPhoneNumber,
             currentAvatarUri = myAvatarUri,
             onAvatarSelected = { newUri ->
                 myAvatarUri = newUri
                 prefs.edit().putString("my_avatar_uri", newUri).apply()
             },
             onDismiss = { showMyAvatarPicker = false }
+        )
+    }
+
+    if (showEditProfileDialog) {
+        var tempName by remember { mutableStateOf(myDisplayName) }
+        var tempPhone by remember { mutableStateOf(myPhoneNumber) }
+        var tempBio by remember { mutableStateOf(myBio) }
+
+        AlertDialog(
+            onDismissRequest = { showEditProfileDialog = false },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Person, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("ویرایش پروفایل من", fontWeight = FontWeight.Bold)
+                }
+            },
+            text = {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    OutlinedTextField(
+                        value = tempName,
+                        onValueChange = { tempName = it },
+                        label = { Text("نام نمایشی شما") },
+                        placeholder = { Text("مثلاً: علیرضا، آرش...") },
+                        singleLine = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("edit_my_name_input"),
+                        shape = RoundedCornerShape(14.dp)
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    OutlinedTextField(
+                        value = tempPhone,
+                        onValueChange = { tempPhone = it },
+                        label = { Text("شماره همراه شما") },
+                        placeholder = { Text("09xxxxxxxxx") },
+                        singleLine = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("edit_my_phone_input"),
+                        shape = RoundedCornerShape(14.dp)
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    OutlinedTextField(
+                        value = tempBio,
+                        onValueChange = { tempBio = it },
+                        label = { Text("وضعیت / معرفی کوتاه") },
+                        placeholder = { Text("مثلاً: ارتباط محرمانه و بدون اینترنت") },
+                        maxLines = 2,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("edit_my_bio_input"),
+                        shape = RoundedCornerShape(14.dp)
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val cleanName = tempName.trim().ifBlank { "من" }
+                        val cleanPhone = tempPhone.trim()
+                        val cleanBio = tempBio.trim()
+                        myDisplayName = cleanName
+                        myPhoneNumber = cleanPhone
+                        myBio = cleanBio
+                        prefs.edit()
+                            .putString("my_display_name", cleanName)
+                            .putString("my_phone_number", cleanPhone)
+                            .putString("my_bio", cleanBio)
+                            .apply()
+                        Toast.makeText(context, "مشخصات پروفایل با موفقیت ذخیره شد", Toast.LENGTH_SHORT).show()
+                        showEditProfileDialog = false
+                    },
+                    modifier = Modifier.testTag("save_my_profile_button")
+                ) {
+                    Text("ذخیره مشخصات", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditProfileDialog = false }) {
+                    Text("لغو")
+                }
+            }
         )
     }
 

@@ -1,5 +1,6 @@
 package com.example.ui.screens
 
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -31,6 +32,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -42,6 +44,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Campaign
 import androidx.compose.material.icons.filled.Chat
@@ -112,6 +115,7 @@ import com.example.ui.components.LiquidButton as Button
 import com.example.ui.components.LiquidFloatingActionButton as FloatingActionButton
 import com.example.ui.components.LiquidIconButton as IconButton
 import com.example.ui.components.LiquidNavItem
+import com.example.ui.components.LiquidOutlinedButton as OutlinedButton
 import com.example.ui.components.LiquidTextButton as TextButton
 import com.example.ui.components.glassTextFieldColors
 import com.example.ui.components.ultraGlassSurface
@@ -661,6 +665,28 @@ fun ConversationsScreen(
                                                         fontWeight = FontWeight.Bold
                                                     )
                                                 }
+
+                                                if (selectedFilter == ConversationFilter.ALL || selectedFilter == ConversationFilter.DIRECT) {
+                                                    OutlinedButton(
+                                                        onClick = {
+                                                            coroutineScope.launch(Dispatchers.IO) {
+                                                                val conv = repository.createOrUpdateConversation(
+                                                                    phoneNumber = "09129998877",
+                                                                    contactName = "سارا رضایی (تست رمزنگاری)",
+                                                                    avatarUri = "preset:emerald_shield"
+                                                                )
+                                                                withContext(Dispatchers.Main) {
+                                                                    onOpenConversation(conv.id)
+                                                                }
+                                                            }
+                                                        },
+                                                        shape = RoundedCornerShape(14.dp)
+                                                    ) {
+                                                        Icon(Icons.Default.Bolt, contentDescription = null, modifier = Modifier.size(16.dp))
+                                                        Spacer(modifier = Modifier.width(4.dp))
+                                                        Text("مخاطب تستی سریع")
+                                                    }
+                                                }
                                             }
                                         }
                                     }
@@ -1047,6 +1073,9 @@ private fun NewConversationDialog(
     var description by remember { mutableStateOf("") }
     var selectedAvatarUri by remember { mutableStateOf("") }
     var showAvatarPicker by remember { mutableStateOf(false) }
+    var showDeviceContactsPicker by remember { mutableStateOf(false) }
+    var deviceContactsList by remember { mutableStateOf<List<com.example.util.DeviceContact>>(emptyList()) }
+    var contactSearchQuery by remember { mutableStateOf("") }
     var memberPhoneInput by remember { mutableStateOf("") }
     var memberNameInput by remember { mutableStateOf("") }
     val addedMembers = remember {
@@ -1152,6 +1181,57 @@ private fun NewConversationDialog(
                 Spacer(modifier = Modifier.height(10.dp))
 
                 if (selectedType == ConversationType.DIRECT) {
+                    // Quick Setup Action Buttons
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = {
+                                coroutineScope.launch(Dispatchers.IO) {
+                                    val list = ContactHelper.getDeviceContacts(context)
+                                    withContext(Dispatchers.Main) {
+                                        deviceContactsList = list
+                                        if (list.isNotEmpty()) {
+                                            showDeviceContactsPicker = true
+                                        } else {
+                                            Toast.makeText(context, "مخاطبی در حافظه گوشی یافت نشد؛ می‌توانید دستی وارد کنید یا از دکمه مخاطب تستی استفاده کنید", Toast.LENGTH_LONG).show()
+                                        }
+                                    }
+                                }
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("dialog_pick_device_contact_btn"),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(Icons.Default.ContactPhone, contentDescription = null, modifier = Modifier.size(15.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("انتخاب از مخاطبین", fontSize = 11.sp)
+                        }
+
+                        Button(
+                            onClick = {
+                                phoneNumber = "09129998877"
+                                titleOrName = "سارا رضایی (تست رمزنگاری)"
+                                selectedAvatarUri = "preset:emerald_shield"
+                                errorMessage = null
+                                Toast.makeText(context, "مشخصات مخاطب تستی تکمیل شد", Toast.LENGTH_SHORT).show()
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("dialog_fill_demo_contact_btn"),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                        ) {
+                            Icon(Icons.Default.Bolt, contentDescription = null, modifier = Modifier.size(15.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("مخاطب تستی سریع", fontSize = 11.sp)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
                     OutlinedTextField(
                         value = phoneNumber,
                         onValueChange = { phoneNumber = it },
@@ -1438,6 +1518,115 @@ private fun NewConversationDialog(
             isChannel = selectedType == ConversationType.CHANNEL,
             onAvatarSelected = { uri -> selectedAvatarUri = uri },
             onDismiss = { showAvatarPicker = false }
+        )
+    }
+
+    if (showDeviceContactsPicker) {
+        val filtered = remember(deviceContactsList, contactSearchQuery) {
+            if (contactSearchQuery.isBlank()) deviceContactsList
+            else deviceContactsList.filter {
+                it.name.contains(contactSearchQuery, ignoreCase = true) ||
+                        it.phoneNumber.contains(contactSearchQuery)
+            }
+        }
+        AlertDialog(
+            onDismissRequest = {
+                showDeviceContactsPicker = false
+                contactSearchQuery = ""
+            },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.ContactPhone, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("انتخاب از مخاطبین گوشی", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                }
+            },
+            text = {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    OutlinedTextField(
+                        value = contactSearchQuery,
+                        onValueChange = { contactSearchQuery = it },
+                        placeholder = { Text("جستجوی نام یا شماره...") },
+                        singleLine = true,
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    if (filtered.isEmpty()) {
+                        Text(
+                            text = "مخاطبی یافت نشد",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 280.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            items(filtered, key = { it.id + it.phoneNumber }) { c ->
+                                GlassCard(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp),
+                                    cornerRadius = 12.dp,
+                                    onClick = {
+                                        phoneNumber = c.phoneNumber
+                                        titleOrName = c.name
+                                        if (!c.photoUri.isNullOrBlank()) {
+                                            selectedAvatarUri = c.photoUri
+                                        }
+                                        showDeviceContactsPicker = false
+                                        contactSearchQuery = ""
+                                        errorMessage = null
+                                        Toast.makeText(context, "مخاطب «${c.name}» انتخاب شد", Toast.LENGTH_SHORT).show()
+                                    }
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 10.dp, vertical = 8.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        ContactAvatar(
+                                            name = c.name,
+                                            avatarUri = c.photoUri,
+                                            size = 36.dp
+                                        )
+                                        Spacer(modifier = Modifier.width(10.dp))
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = c.name,
+                                                fontWeight = FontWeight.SemiBold,
+                                                fontSize = 13.sp,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                            Text(
+                                                text = c.phoneNumber,
+                                                fontSize = 11.sp,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeviceContactsPicker = false
+                        contactSearchQuery = ""
+                    }
+                ) {
+                    Text("انصراف")
+                }
+            }
         )
     }
 }

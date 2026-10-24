@@ -24,6 +24,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Campaign
 import androidx.compose.material.icons.filled.Close
@@ -59,6 +60,7 @@ import com.example.ui.components.ContactAvatar
 import com.example.ui.components.GlassCard
 import com.example.ui.components.LiquidButton as Button
 import com.example.ui.components.LiquidIconButton
+import com.example.ui.components.LiquidOutlinedButton as OutlinedButton
 import com.example.ui.components.glassTextFieldColors
 import com.example.ui.components.ultraGlassSurface
 import com.example.util.ContactHelper
@@ -348,15 +350,54 @@ fun ContactsScreen(
                     Icon(
                         imageVector = Icons.Default.Person,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(48.dp)
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(54.dp)
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
                     Text(
-                        text = if (searchQuery.isNotBlank()) "مخاطبی با این مشخصات یافت نشد" else "مخاطبی در گوشی یافت نشد",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 14.sp
+                        text = if (searchQuery.isNotBlank()) "مخاطبی با این مشخصات یافت نشد" else "هنوز مخاطبی در گوشی یافت نشده است",
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp
                     )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "می‌توانید به سادگی شماره جدید اضافه کنید یا یک مخاطب نمونه جهت تست سریع بسازید.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 12.sp,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(18.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(
+                            onClick = onManualNewChat,
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("شماره جدید", fontSize = 12.sp)
+                        }
+
+                        OutlinedButton(
+                            onClick = {
+                                coroutineScope.launch(Dispatchers.IO) {
+                                    val conv = repository.createOrUpdateConversation(
+                                        phoneNumber = "09129998877",
+                                        contactName = "سارا رضایی (تست رمزنگاری)",
+                                        avatarUri = "preset:emerald_shield"
+                                    )
+                                    withContext(Dispatchers.Main) {
+                                        onSelectContact(conv.id)
+                                    }
+                                }
+                            },
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(Icons.Default.Bolt, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("مخاطب تستی سریع", fontSize = 12.sp)
+                        }
+                    }
                 }
             }
         } else {
