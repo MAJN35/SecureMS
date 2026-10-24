@@ -57,6 +57,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
@@ -150,6 +151,7 @@ fun ConversationsScreen(
     var selectedFilter by remember { mutableStateOf(ConversationFilter.ALL) }
     var selectedBottomTab by remember { mutableIntStateOf(0) } // 0: Chats, 1: Contacts, 2: Settings
     var avatarEditingConversation by remember { mutableStateOf<ConversationEntity?>(null) }
+    var showTweetDialog by remember { mutableStateOf(false) }
 
     BackHandler(enabled = selectedBottomTab != 0) {
         selectedBottomTab = 0
@@ -237,6 +239,16 @@ fun ConversationsScreen(
                         }
                     },
                     actions = {
+                        IconButton(
+                            onClick = { showTweetDialog = true },
+                            modifier = Modifier.testTag("share_tweet_button")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Share,
+                                contentDescription = "نشر در توییتر (توییت)",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
                         IconButton(
                             onClick = onToggleTheme,
                             modifier = Modifier.testTag("theme_toggle_button")
@@ -706,6 +718,12 @@ fun ConversationsScreen(
                 }
             },
             onDismiss = { avatarEditingConversation = null }
+        )
+    }
+
+    if (showTweetDialog) {
+        TweetShareDialog(
+            onDismiss = { showTweetDialog = false }
         )
     }
 }

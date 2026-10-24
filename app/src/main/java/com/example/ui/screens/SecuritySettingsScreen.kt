@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -72,6 +73,7 @@ import com.example.ui.components.ContactAvatar
 import com.example.ui.components.GlassCard
 import com.example.ui.components.GlassHeaderSurface
 import com.example.ui.components.QrCodeCanvas
+import com.example.ui.components.ultraGlassSurface
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -104,6 +106,7 @@ fun SecuritySettingsScreen(
     var showWipeConfirmDialog by remember { mutableStateOf(false) }
     var showRegenerateKeyDialog by remember { mutableStateOf(false) }
     var showQrDialog by remember { mutableStateOf(false) }
+    var showTweetDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         val pub = repository.getMyPublicKey()
@@ -454,6 +457,56 @@ fun SecuritySettingsScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
+            // Free Speech & Community
+            Text(
+                text = "جامعه و آزادی ارتباطات",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            GlassCard(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                cornerRadius = 18.dp
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .ultraGlassSurface(
+                                    shape = CircleShape,
+                                    cornerRadius = 18.dp,
+                                    tintColor = Color(0xFF1DA1F2).copy(alpha = 0.25f)
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Default.Share, contentDescription = null, tint = Color(0xFF1DA1F2), modifier = Modifier.size(18.dp))
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text("نشر صدای آزادی در توییتر / X", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                            Text("متن‌های آماده درباره حق ارتباط و معرفی اپ برای جوانان", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Button(
+                        onClick = { showTweetDialog = true },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1DA1F2)),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.fillMaxWidth().testTag("settings_tweet_button")
+                    ) {
+                        Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.White)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("مشاهده و ارسال توییت", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color.White)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
             // Danger Zone
             Text(
                 text = "حذف اطلاعات",
@@ -595,6 +648,12 @@ fun SecuritySettingsScreen(
                 prefs.edit().putString("my_avatar_uri", newUri).apply()
             },
             onDismiss = { showMyAvatarPicker = false }
+        )
+    }
+
+    if (showTweetDialog) {
+        TweetShareDialog(
+            onDismiss = { showTweetDialog = false }
         )
     }
 }
