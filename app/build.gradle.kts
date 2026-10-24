@@ -139,9 +139,8 @@ dependencies {
   androidTestImplementation(libs.androidx.junit)
   androidTestImplementation(libs.androidx.runner)
   debugImplementation(libs.androidx.compose.ui.test.manifest)
-  debugImplementation(libs.androidx.compose.ui.tooling)
   "ksp"(libs.androidx.room.compiler)
-  "ksp"(libs.moshi.kotlin.codegen)
+  // "ksp"(libs.moshi.kotlin.codegen)
 }
 
 val copyApkToExport by tasks.registering(Copy::class) {
@@ -164,3 +163,9 @@ val copyDebugApkToExport by tasks.registering(Copy::class) {
 tasks.matching { it.name == "assembleDebug" || it.name == "packageDebug" }.configureEach {
   finalizedBy(copyApkToExport, copyDebugApkToExport)
 }
+
+// Unit tests do not define Room entities/DAOs; disabling KSP on UnitTest tasks prevents upstream KSP headless AWT NPE
+tasks.matching { it.name.startsWith("ksp") && it.name.contains("UnitTest") }.configureEach {
+  enabled = false
+}
+
